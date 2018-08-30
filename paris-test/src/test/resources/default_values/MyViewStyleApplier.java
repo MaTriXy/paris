@@ -3,6 +3,7 @@ package com.airbnb.paris.test;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.AnyRes;
 import android.support.annotation.ArrayRes;
@@ -12,8 +13,10 @@ import android.support.annotation.ColorRes;
 import android.support.annotation.DimenRes;
 import android.support.annotation.Dimension;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.FontRes;
 import android.support.annotation.FractionRes;
 import android.support.annotation.IntegerRes;
+import android.support.annotation.Nullable;
 import android.support.annotation.Px;
 import android.support.annotation.StringRes;
 import android.support.annotation.UiThread;
@@ -21,6 +24,7 @@ import android.view.ViewStyleApplier;
 import com.airbnb.paris.StyleApplier;
 import com.airbnb.paris.styles.Style;
 import com.airbnb.paris.typed_array_wrappers.TypedArrayWrapper;
+import com.airbnb.paris.utils.ContextExtensionsKt;
 import com.airbnb.paris.utils.ResourcesExtensionsKt;
 import java.lang.CharSequence;
 import java.lang.Override;
@@ -46,17 +50,19 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
 
   @Override
   public int[] attributesWithDefaultValue() {
-    return new int[] {R.styleable.Formats_formatBoolean,R.styleable.Formats_formatColor,R.styleable.Formats_formatDimension,R.styleable.Formats_formatEnum,R.styleable.Formats_formatFlag,R.styleable.Formats_formatFloat,R.styleable.Formats_formatFraction,R.styleable.Formats_formatInteger,R.styleable.Formats_formatReference,R.styleable.Formats_formatReference2,R.styleable.Formats_formatReference3,R.styleable.Formats_formatString,R.styleable.Formats_formatString2,};
+    return new int[] {R.styleable.Formats_formatBoolean,R.styleable.Formats_formatColor,R.styleable.Formats_formatDimension,R.styleable.Formats_formatEnum,R.styleable.Formats_formatFlag,R.styleable.Formats_formatFloat,R.styleable.Formats_formatFraction,R.styleable.Formats_formatInteger,R.styleable.Formats_formatReference,R.styleable.Formats_formatReference2,R.styleable.Formats_formatReference3,R.styleable.Formats_formatReference4,R.styleable.Formats_formatString,R.styleable.Formats_formatString2,};
   }
 
   @Override
   protected void processStyleableFields(Style style, TypedArrayWrapper a) {
-    Resources res = getView().getContext().getResources();
+    Context context = getView().getContext();
+    Resources res = context.getResources();
   }
 
   @Override
   protected void processAttributes(Style style, TypedArrayWrapper a) {
-    Resources res = getView().getContext().getResources();
+    Context context = getView().getContext();
+    Resources res = context.getResources();
     if (a.hasValue(R.styleable.Formats_formatBoolean)) {
       getProxy().formatBoolean(a.getBoolean(R.styleable.Formats_formatBoolean));
     }
@@ -134,6 +140,12 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
     }
     else if (style.getShouldApplyDefaults()) {
       getProxy().formatReference_Drawable(res.getDrawable(R.drawable.format_drawable));
+    }
+    if (a.hasValue(R.styleable.Formats_formatReference4)) {
+      getProxy().formatReference_Font(a.getFont(R.styleable.Formats_formatReference4));
+    }
+    else if (style.getShouldApplyDefaults()) {
+      getProxy().formatReference_Font(ContextExtensionsKt.getFont(context, R.font.format_font));
     }
     if (a.hasValue(R.styleable.Formats_formatString)) {
       getProxy().formatString_CharSequence(a.getText(R.styleable.Formats_formatString));
@@ -292,7 +304,7 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
 
     /**
      * @see MyView#formatReference_CharSequenceArray(CharSequence[]) */
-    public B formatReference(CharSequence[] value) {
+    public B formatReference(@Nullable CharSequence[] value) {
       getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatReference], value);
       return (B) this;
     }
@@ -306,7 +318,7 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
 
     /**
      * @see MyView#formatReference_ColorStateList(ColorStateList) */
-    public B formatReference2(ColorStateList value) {
+    public B formatReference2(@Nullable ColorStateList value) {
       getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatReference2], value);
       return (B) this;
     }
@@ -327,7 +339,7 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
 
     /**
      * @see MyView#formatReference_Drawable(Drawable) */
-    public B formatReference3(Drawable value) {
+    public B formatReference3(@Nullable Drawable value) {
       getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatReference3], value);
       return (B) this;
     }
@@ -340,8 +352,22 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
     }
 
     /**
+     * @see MyView#formatReference_Font(Typeface) */
+    public B formatReference4(@Nullable Typeface value) {
+      getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatReference4], value);
+      return (B) this;
+    }
+
+    /**
+     * @see MyView#formatReference_Font(Typeface) */
+    public B formatReference4Res(@FontRes int resId) {
+      getBuilder().putRes(R.styleable.Formats[R.styleable.Formats_formatReference4], resId);
+      return (B) this;
+    }
+
+    /**
      * @see MyView#formatString_CharSequence(CharSequence) */
-    public B formatString(CharSequence value) {
+    public B formatString(@Nullable CharSequence value) {
       getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatString], value);
       return (B) this;
     }
@@ -355,7 +381,7 @@ public final class MyViewStyleApplier extends StyleApplier<MyView, MyView> {
 
     /**
      * @see MyView#formatString_String(String) */
-    public B formatString2(String value) {
+    public B formatString2(@Nullable String value) {
       getBuilder().put(R.styleable.Formats[R.styleable.Formats_formatString2], value);
       return (B) this;
     }

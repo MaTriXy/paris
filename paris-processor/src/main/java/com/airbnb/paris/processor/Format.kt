@@ -1,15 +1,21 @@
 package com.airbnb.paris.processor
 
-import com.airbnb.paris.annotations.*
-import com.airbnb.paris.processor.framework.*
-import com.airbnb.paris.processor.utils.*
-import com.squareup.javapoet.*
-import javax.lang.model.element.*
+import com.airbnb.paris.annotations.Fraction
+import com.airbnb.paris.processor.framework.AndroidClassNames
+import com.airbnb.paris.processor.framework.AndroidClassNames.RESOURCES_COMPAT
+import com.airbnb.paris.processor.framework.hasAnnotation
+import com.airbnb.paris.processor.framework.hasAnyAnnotation
+import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.CodeBlock
+import javax.lang.model.element.Element
+import javax.lang.model.element.ElementKind
+import javax.lang.model.element.ExecutableElement
 
 internal class Format private constructor(
-        private val type: Type,
-        private val base: Int = 1,
-        private val pbase: Int = 1) {
+    private val type: Type,
+    private val base: Int = 1,
+    private val pbase: Int = 1
+) {
 
     companion object {
 
@@ -27,6 +33,7 @@ internal class Format private constructor(
             DIMENSION_PIXEL_SIZE,
             DRAWABLE,
             FLOAT,
+            FONT,
             FRACTION,
             INT,
             INTEGER,
@@ -38,41 +45,42 @@ internal class Format private constructor(
         }
 
         private val RES_ANNOTATIONS = hashSetOf(
-                "AnimatorRes",
-                "AnimRes",
-                "AnyRes",
-                "ArrayRes",
-                "AttrRes",
-                "BoolRes",
-                "ColorRes",
-                "DimenRes",
-                "DrawableRes",
-                "FontRes",
-                "FractionRes",
-                "IdRes",
-                "IntegerRes",
-                "InterpolatorRes",
-                "LayoutRes",
-                "MenuRes",
-                "PluralsRes",
-                "RawRes",
-                "StringRes",
-                "StyleableRes",
-                "StyleRes",
-                "TransitionRes",
-                "XmlRes")
+            "AnimatorRes",
+            "AnimRes",
+            "AnyRes",
+            "ArrayRes",
+            "AttrRes",
+            "BoolRes",
+            "ColorRes",
+            "DimenRes",
+            "DrawableRes",
+            "FontRes",
+            "FractionRes",
+            "IdRes",
+            "IntegerRes",
+            "InterpolatorRes",
+            "LayoutRes",
+            "MenuRes",
+            "PluralsRes",
+            "RawRes",
+            "StringRes",
+            "StyleableRes",
+            "StyleRes",
+            "TransitionRes",
+            "XmlRes"
+        )
 
-        fun forElement(element: Element): Format {
+        fun forElement(processor: ParisProcessor, element: Element): Format {
             return if (element.kind == ElementKind.FIELD) {
-                forField(element)
+                forField(processor, element)
             } else {
                 forMethod(element)
             }
         }
 
-        private fun forField(element: Element): Format {
+        private fun forField(processor: ParisProcessor, element: Element): Format {
             val type = element.asType()
-            if (isView(type)) {
+            if (processor.isView(type)) {
                 // If the field is a View then the attribute must be a style or style resource id
                 return Format(Type.STYLE)
             }
@@ -112,6 +120,7 @@ internal class Format private constructor(
                 "java.lang.CharSequence" -> Type.CHARSEQUENCE
                 "java.lang.CharSequence[]" -> Type.CHARSEQUENCE_ARRAY
                 "android.content.res.ColorStateList" -> Type.COLOR_STATE_LIST
+                "android.graphics.Typeface" -> Type.FONT
                 "android.graphics.drawable.Drawable" -> Type.DRAWABLE
                 "java.lang.Float", "float" -> Type.FLOAT
                 "java.lang.Integer", "int" -> Type.INT
@@ -123,10 +132,10 @@ internal class Format private constructor(
     }
 
     val isDimensionType = type in listOf(
-            Type.LAYOUT_DIMENSION,
-            Type.DIMENSION,
-            Type.DIMENSION_PIXEL_OFFSET,
-            Type.DIMENSION_PIXEL_SIZE
+        Type.LAYOUT_DIMENSION,
+        Type.DIMENSION,
+        Type.DIMENSION_PIXEL_OFFSET,
+        Type.DIMENSION_PIXEL_SIZE
     )
 
     val isColorStateListType = type == Type.COLOR_STATE_LIST
@@ -134,6 +143,12 @@ internal class Format private constructor(
     val valueAnnotation: ClassName?
         get() = when (type) {
             Type.COLOR -> AndroidClassNames.COLOR_INT
+            Type.CHARSEQUENCE,
+            Type.CHARSEQUENCE_ARRAY,
+            Type.COLOR_STATE_LIST,
+            Type.DRAWABLE,
+            Type.FONT,
+            Type.STRING -> AndroidClassNames.NULLABLE
             Type.DIMENSION,
             Type.DIMENSION_PIXEL_OFFSET,
             Type.DIMENSION_PIXEL_SIZE -> {
@@ -162,6 +177,7 @@ internal class Format private constructor(
                 AndroidClassNames.DIMEN_RES
             }
             Type.DRAWABLE -> AndroidClassNames.DRAWABLE_RES
+            Type.FONT -> AndroidClassNames.FONT_RES
             Type.FRACTION -> AndroidClassNames.FRACTION_RES
             Type.INT,
             Type.INTEGER -> {
@@ -173,7 +189,7 @@ internal class Format private constructor(
             Type.RESOURCE_ID -> AndroidClassNames.ANY_RES
         }
 
-    fun resourcesMethodCode(resourcesVar: String, valueResIdCode: CodeBlock): CodeBlock {
+    fun resourcesMethodCode(contextVar: String, resourcesVar: String, valueResIdCode: CodeBlock): CodeBlock {
         val statement = when (type) {
             Type.BOOLEAN -> "getBoolean(\$L)"
             Type.CHARSEQUENCE -> "getText(\$L)"
@@ -190,12 +206,15 @@ internal class Format private constructor(
             Type.NON_RESOURCE_STRING -> "getNonResourceString(\$L)"
             Type.STRING -> "getString(\$L)"
 
-            // Using extension functions because unsupported by Resources
+        // Using extension functions because unsupported by Resources
             Type.LAYOUT_DIMENSION -> "\$T.getLayoutDimension(\$L, \$L)"
             Type.FLOAT -> "\$T.getFloat(\$L, \$L)"
             Type.STYLE -> "\$T.getStyle(\$L, \$L)"
 
-            // Special case, the resource id is the value
+        // Using ResourcesCompat with context and font resource arguments
+            Type.FONT -> "\$T.getFont(\$L, \$L)"
+
+        // Special case, the resource id is the value
             Type.RESOURCE_ID -> "\$L"
         }
 
@@ -207,7 +226,20 @@ internal class Format private constructor(
                 CodeBlock.of("\$L.$statement", resourcesVar, valueResIdCode)
             }
             Type.FLOAT, Type.LAYOUT_DIMENSION, Type.STYLE -> {
-                CodeBlock.of(statement, RESOURCES_EXTENSIONS_CLASS_NAME, resourcesVar, valueResIdCode)
+                CodeBlock.of(
+                    statement,
+                    RESOURCES_EXTENSIONS_CLASS_NAME,
+                    resourcesVar,
+                    valueResIdCode
+                )
+            }
+            Type.FONT -> {
+                CodeBlock.of(
+                    statement,
+                    CONTEXT_EXTENSIONS_CLASS_NAME,
+                    contextVar,
+                    valueResIdCode
+                )
             }
             Type.RESOURCE_ID -> {
                 CodeBlock.of(statement, valueResIdCode)
@@ -216,26 +248,29 @@ internal class Format private constructor(
     }
 
     fun typedArrayMethodCode(typedArrayVariable: String, attrResIdCode: CodeBlock): CodeBlock {
-        return CodeBlock.of("\$L." + when (type) {
-            Type.BOOLEAN -> "getBoolean(\$L)"
-            Type.CHARSEQUENCE -> "getText(\$L)"
-            Type.CHARSEQUENCE_ARRAY -> "getTextArray(\$L)"
-            Type.COLOR -> "getColor(\$L)"
-            Type.COLOR_STATE_LIST -> "getColorStateList(\$L)"
-            Type.DIMENSION -> "getDimension(\$L)"
-            Type.DIMENSION_PIXEL_OFFSET -> "getDimensionPixelOffset(\$L)"
-            Type.DIMENSION_PIXEL_SIZE -> "getDimensionPixelSize(\$L)"
-            Type.DRAWABLE -> "getDrawable(\$L)"
-            Type.FLOAT -> "getFloat(\$L)"
-            Type.FRACTION -> "getFraction(\$L, %d, %d)".format(base, pbase)
-            Type.INT -> "getInt(\$L)"
-            Type.INTEGER -> "getInteger(\$L)"
-            Type.LAYOUT_DIMENSION -> "getLayoutDimension(\$L)"
-            Type.NON_RESOURCE_STRING -> "getNonResourceString(\$L)"
-            Type.RESOURCE_ID -> "getResourceId(\$L)"
-            Type.STRING -> "getString(\$L)"
-            Type.STYLE -> "getStyle(\$L)"
-        }, typedArrayVariable, attrResIdCode)
+        return CodeBlock.of(
+            "\$L." + when (type) {
+                Type.BOOLEAN -> "getBoolean(\$L)"
+                Type.CHARSEQUENCE -> "getText(\$L)"
+                Type.CHARSEQUENCE_ARRAY -> "getTextArray(\$L)"
+                Type.COLOR -> "getColor(\$L)"
+                Type.COLOR_STATE_LIST -> "getColorStateList(\$L)"
+                Type.DIMENSION -> "getDimension(\$L)"
+                Type.DIMENSION_PIXEL_OFFSET -> "getDimensionPixelOffset(\$L)"
+                Type.DIMENSION_PIXEL_SIZE -> "getDimensionPixelSize(\$L)"
+                Type.DRAWABLE -> "getDrawable(\$L)"
+                Type.FLOAT -> "getFloat(\$L)"
+                Type.FRACTION -> "getFraction(\$L, %d, %d)".format(base, pbase)
+                Type.FONT -> "getFont(\$L)"
+                Type.INT -> "getInt(\$L)"
+                Type.INTEGER -> "getInteger(\$L)"
+                Type.LAYOUT_DIMENSION -> "getLayoutDimension(\$L)"
+                Type.NON_RESOURCE_STRING -> "getNonResourceString(\$L)"
+                Type.RESOURCE_ID -> "getResourceId(\$L)"
+                Type.STRING -> "getString(\$L)"
+                Type.STYLE -> "getStyle(\$L)"
+            }, typedArrayVariable, attrResIdCode
+        )
     }
 
     override fun equals(other: Any?): Boolean {

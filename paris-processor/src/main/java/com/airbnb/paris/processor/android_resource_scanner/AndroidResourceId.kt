@@ -1,30 +1,23 @@
 package com.airbnb.paris.processor.android_resource_scanner
 
-import com.airbnb.paris.processor.framework.*
-import com.squareup.javapoet.*
+import com.airbnb.paris.processor.framework.AndroidClassNames
+import com.airbnb.paris.processor.framework.JavaCodeBlock
+import com.airbnb.paris.processor.framework.KotlinCodeBlock
+import com.airbnb.paris.processor.framework.toKPoet
+import com.squareup.javapoet.ClassName
 
-internal class AndroidResourceId {
+internal class AndroidResourceId(val value: Int, val className: ClassName, val resourceName: String) {
 
-    val value: Int
-    val resourceName: String?
-    val code: CodeBlock
-    val className: ClassName?
-
-    constructor(value: Int) {
-        this.value = value
-        this.resourceName = null
-        this.code = CodeBlock.of("\$L", value)
-        this.className = null
+    val code: JavaCodeBlock = if (className.topLevelClassName() == AndroidClassNames.R) {
+        JavaCodeBlock.of("\$L.\$N", className, resourceName)
+    } else {
+        JavaCodeBlock.of("\$T.\$N", className, resourceName)
     }
 
-    constructor(value: Int, className: ClassName, resourceName: String) {
-        this.value = value
-        this.resourceName = resourceName
-        this.code = if (className.topLevelClassName() == AndroidClassNames.R)
-            CodeBlock.of("\$L.\$N", className, resourceName)
-        else
-            CodeBlock.of("\$T.\$N", className, resourceName)
-        this.className = className
+    val kotlinCode: KotlinCodeBlock = if (className.topLevelClassName() == AndroidClassNames.R) {
+        KotlinCodeBlock.of("%L.%N", className.toKPoet(), resourceName)
+    } else {
+        KotlinCodeBlock.of("%T.%N", className.toKPoet(), resourceName)
     }
 
     override fun equals(other: Any?): Boolean {

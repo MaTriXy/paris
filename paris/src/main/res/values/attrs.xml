@@ -4,6 +4,8 @@
     <declare-styleable name="Paris_View">
         <attr name="android:alpha" />
         <attr name="android:background" />
+        <attr name="android:backgroundTint" />
+        <attr name="android:backgroundTintMode" />
         <attr name="android:contentDescription" />
         <attr name="android:elevation" />
         <attr name="android:foreground" />
@@ -46,12 +48,16 @@
         <attr name="android:drawableRight" />
         <attr name="android:drawableTop" />
         <attr name="android:ellipsize" />
+        <attr name="android:hint" />
+        <attr name="android:inputType" />
+        <attr name="android:fontFamily" />
         <attr name="android:gravity" />
         <attr name="android:letterSpacing" />
         <attr name="android:lines" />
         <attr name="android:lineSpacingExtra" />
         <attr name="android:lineSpacingMultiplier" />
         <attr name="android:maxLines" />
+        <attr name="android:maxWidth" />
         <attr name="android:minLines" />
         <attr name="android:minWidth" />
         <attr name="android:singleLine" />

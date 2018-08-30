@@ -1,14 +1,11 @@
 package com.airbnb.paris.typed_array_wrappers
 
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import com.airbnb.paris.styles.Style
 
 internal object EmptyTypedArrayWrapper : TypedArrayWrapper() {
-
-    override fun isNull(index: Int): Boolean {
-        throw illegalStateException()
-    }
 
     override fun getIndexCount(): Int {
         return 0
@@ -30,7 +27,7 @@ internal object EmptyTypedArrayWrapper : TypedArrayWrapper() {
         throw illegalStateException()
     }
 
-    override fun getColorStateList(index: Int): ColorStateList {
+    override fun getColorStateList(index: Int): ColorStateList? {
         throw illegalStateException()
     }
 
@@ -38,7 +35,7 @@ internal object EmptyTypedArrayWrapper : TypedArrayWrapper() {
         throw illegalStateException()
     }
 
-    override fun getDrawable(index: Int): Drawable {
+    override fun getDrawable(index: Int): Drawable? {
         throw illegalStateException()
     }
 
@@ -47,6 +44,10 @@ internal object EmptyTypedArrayWrapper : TypedArrayWrapper() {
     }
 
     override fun getFraction(index: Int, base: Int, pbase: Int): Float {
+        throw illegalStateException()
+    }
+
+    override fun getFont(index: Int): Typeface? {
         throw illegalStateException()
     }
 
@@ -62,15 +63,15 @@ internal object EmptyTypedArrayWrapper : TypedArrayWrapper() {
         throw illegalStateException()
     }
 
-    override fun getString(index: Int): String {
+    override fun getString(index: Int): String? {
         throw illegalStateException()
     }
 
-    override fun getText(index: Int): CharSequence {
+    override fun getText(index: Int): CharSequence? {
         throw illegalStateException()
     }
 
-    override fun getTextArray(index: Int): Array<CharSequence> {
+    override fun getTextArray(index: Int): Array<CharSequence>? {
         throw illegalStateException()
     }
 

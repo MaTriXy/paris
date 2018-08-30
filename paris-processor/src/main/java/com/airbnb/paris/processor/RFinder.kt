@@ -1,12 +1,14 @@
 package com.airbnb.paris.processor
 
-import com.airbnb.paris.annotations.*
-import com.airbnb.paris.processor.framework.*
-import com.airbnb.paris.processor.models.*
-import javax.lang.model.element.*
-import javax.lang.model.type.*
+import com.airbnb.paris.annotations.ParisConfig
+import com.airbnb.paris.processor.models.AttrInfo
+import com.airbnb.paris.processor.models.StyleableChildInfo
+import com.airbnb.paris.processor.models.StyleableInfo
+import javax.lang.model.element.TypeElement
+import javax.lang.model.type.MirroredTypeException
+import javax.lang.model.type.TypeMirror
 
-internal class RFinder {
+internal class RFinder(override val processor: ParisProcessor) : WithParisProcessor {
 
     var element: TypeElement? = null
 
@@ -15,24 +17,14 @@ internal class RFinder {
             return
         }
 
-        var rType: TypeMirror?
-        config.let {
-            rType = getRTypeFromConfig(config)
-
-            // TODO Move check to getRTypeFromConfig
-            check(rType == null || rType!!.asTypeElement().simpleName.toString() == "R") {
-                "@ParisConfig's rClass parameter is pointing to a non-R class"
-            }
-
-            rType?.let {
-                element = it.asTypeElement()
-            }
+        getRTypeFromConfig(config)?.let {
+            element = it.asTypeElement()
         }
     }
 
     fun processResourceAnnotations(
-            styleableChildrenInfo: List<StyleableChildInfo>,
-            attrsInfo: List<AttrInfo>
+        styleableChildrenInfo: List<StyleableChildInfo>,
+        attrsInfo: List<AttrInfo>
     ) {
         if (element != null) {
             return
@@ -44,14 +36,14 @@ internal class RFinder {
             else -> null
         }
         arbitraryResId?.let {
-            element = elements.getTypeElement(it.className!!.enclosingClassName().reflectionName())
+            element = elements.getTypeElement(it.className.enclosingClassName().reflectionName())
         }
     }
 
     fun processStyleables(styleablesInfo: List<StyleableInfo>) {
         if (element == null && styleablesInfo.isNotEmpty()) {
-            styleablesInfo[0].let {
-                var packageName = it.elementPackageName
+            styleablesInfo[0].let { styleableInfo ->
+                var packageName = styleableInfo.elementPackageName
                 while (packageName.isNotBlank()) {
                     elements.getTypeElement("$packageName.R")?.let {
                         element = it
@@ -76,11 +68,19 @@ internal class RFinder {
             rType = mte.typeMirror
         }
 
+        // Void is the default so check against that
         val voidType = elements.getTypeElement(Void::class.java.canonicalName).asType()
         return if (types.isSameType(voidType, rType)) {
             null
         } else {
-            rType
+            if (rType != null && rType.asTypeElement().simpleName.toString() != "R") {
+                logError {
+                    "@ParisConfig's rClass parameter is pointing to a non-R class"
+                }
+                null
+            } else {
+                rType
+            }
         }
     }
 }

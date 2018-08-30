@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Test_TextViewStyleApplier_DrawableLeft">
+        <item name="android:drawableLeft">@android:drawable/alert_dark_frame</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassDatetime">
+        <item name="android:inputType">datetime</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassNumber">
+        <item name="android:inputType">number</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassPhone">
+        <item name="android:inputType">phone</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassText">
+        <item name="android:inputType">text</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassTextVariationPassword">
+        <item name="android:inputType">textPassword</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassTextVariationPasswordSingleLine">
+        <item name="android:inputType">textPassword</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassTextVariationUri">
+        <item name="android:inputType">textUri</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_ClassTextFlagAutoComplete">
+        <item name="android:inputType">textAutoComplete</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_InputType_MultiLineSingleLine">
+        <item name="android:inputType">textMultiLine</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_FontFamily_String">
+        <item name="android:fontFamily">sans-serif-bold</item>
+    </style>
+
+    <style name="Test_TextViewStyleApplier_FontFamily_Resource">
+        <item name="android:fontFamily">@font/roboto_regular</item>
+    </style>
+
+</resources>

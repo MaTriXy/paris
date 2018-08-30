@@ -1,11 +1,13 @@
 package com.airbnb.paris.processor
 
-import com.airbnb.paris.processor.framework.*
-import com.airbnb.paris.processor.models.*
-import com.squareup.javapoet.*
-import javax.lang.model.element.*
+import com.airbnb.paris.processor.models.BaseStyleableInfo
+import com.squareup.javapoet.ClassName
+import javax.lang.model.element.TypeElement
 
-internal class StyleablesTree(private val styleablesInfo: List<BaseStyleableInfo>) {
+internal class StyleablesTree(
+    override val processor: ParisProcessor,
+    private val styleablesInfo: List<BaseStyleableInfo>
+) : WithParisProcessor {
 
     // This is a map of the View class qualified name to the StyleApplier ClassName
     // eg. "android.view.View" -> "com.airbnb.paris.ViewStyleApplier".className()
@@ -25,7 +27,7 @@ internal class StyleablesTree(private val styleablesInfo: List<BaseStyleableInfo
         // Check to see if the view type is handled by a styleable class
         val styleableInfo = styleablesInfo.find { isSameType(type, it.viewElementType) }
         if (styleableInfo != null) {
-            styleApplierClassName = styleableInfo.styleApplierClassName()
+            styleApplierClassName = styleableInfo.styleApplierClassName
         } else {
             styleApplierClassName = findStyleApplier(viewTypeElement.superclass.asTypeElement())
         }

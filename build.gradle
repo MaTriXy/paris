@@ -4,7 +4,7 @@ buildscript {
     ext {
         ANDROID_PLUGIN_VERSION = '3.1.0'
         BUTTERKNIFE_VERSION = '9.0.0-SNAPSHOT'
-        KOTLIN_VERSION = '1.2.30'
+        KOTLIN_VERSION = '1.2.60'
     }
 
     repositories {
@@ -24,6 +24,20 @@ allprojects {
     repositories {
         google()
         jcenter()
+    }
+
+    configurations.all {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jre7'
+
+        resolutionStrategy {
+            // fail eagerly on version conflict (includes transitive dependencies)
+            // e.g. multiple different versions of the same dependency (group and name are equal)
+            failOnVersionConflict()
+
+            force deps.kotlin, deps.kotlinReflect, deps.mockitoCore, 'com.google.errorprone:error_prone_annotations:2.0.19',
+                    'com.google.guava:guava:22.0', 'org.apache.httpcomponents:httpcore:4.2.5', 'org.codehaus.plexus:plexus-utils:1.5.15',
+                    "org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION"
+        }
     }
 }
 

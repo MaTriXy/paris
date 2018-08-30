@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'com.jakewharton.butterknife'
 
 android {
@@ -20,22 +21,23 @@ android {
 }
 
 dependencies {
-    implementation project(':paris-annotations')
-
     implementation deps.appcompatV7
+    implementation deps.supportV4
+
+    api project(':paris-annotations')
 
     // We use "api" here instead of "implementation" to avoid app module warnings like:
     // "Warning: unknown enum constant AnnotationTarget.FIELD"
     api deps.kotlin
 
-    compileOnly project(':paris-processor')
-
-    annotationProcessor project(':paris-processor')
+    kapt project(':paris-processor')
 
     testImplementation deps.junit
     testImplementation deps.kotlinTest
     testImplementation deps.mockitoCore
     testImplementation deps.robolectric
+
+    kaptTest project(':paris-processor')
 
     androidTestImplementation deps.mockitoAndroid
     androidTestImplementation deps.espresso

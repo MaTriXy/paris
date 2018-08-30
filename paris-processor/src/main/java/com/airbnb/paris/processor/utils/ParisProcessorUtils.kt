@@ -1,9 +1,10 @@
 package com.airbnb.paris.processor.utils
 
+// This is purposefully left public to facilitate integrations with Paris
+// TODO BREAKING Refactor this to be an object with @JvmStatic functions
 class ParisProcessorUtils {
 
     companion object {
-
         /**
          * Format the name of a @Style annotated field or method to match what the style applier and
          * builder will use.
@@ -22,24 +23,30 @@ class ParisProcessorUtils {
             // Converts any name to CamelCase
             val isNameAllCaps = name.all { it.isUpperCase() || !it.isLetter() }
             return name
-                    .foldRightIndexed("") { index, c, acc ->
-                        if (c == '_') {
-                            acc
-                        } else {
-                            if (index == 0) {
-                                c.toUpperCase() + acc
-                            } else if (name[index - 1] != '_') {
-                                if (isNameAllCaps) {
-                                    c.toLowerCase() + acc
-                                } else {
-                                    c + acc
-                                }
+                .foldRightIndexed("") { index, c, acc ->
+                    if (c == '_') {
+                        acc
+                    } else {
+                        if (index == 0) {
+                            c.toUpperCase() + acc
+                        } else if (name[index - 1] != '_') {
+                            if (isNameAllCaps) {
+                                c.toLowerCase() + acc
                             } else {
-                                c.toUpperCase() + acc
+                                c + acc
                             }
+                        } else {
+                            c.toUpperCase() + acc
                         }
                     }
-                    .removeSuffix("Style")
+                }
+                .let {
+                    if (it != "Style") {
+                        it.removeSuffix("Style")
+                    } else {
+                        it
+                    }
+                }
         }
     }
 }
