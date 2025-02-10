@@ -4,7 +4,11 @@ import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.Spanned
-import android.text.style.*
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
+import android.text.style.TextAppearanceSpan
+import android.text.style.TypefaceSpan
 import com.airbnb.paris.R
 import com.airbnb.paris.styles.Style
 
@@ -19,8 +23,9 @@ internal class StyleConverter(val context: Context) {
 
         val string = SpannableString(text)
 
-        markup.forEach { markupItem ->
-            spansFromStyle(markupItem.style).forEach {
+        // working around lint issue incorrectly flagging forEach as being a java language feature only for api 24+
+        markup.forEachIndexed { _, markupItem ->
+            spansFromStyle(markupItem.style).forEachIndexed { _, it ->
                 string.setSpan(it, markupItem.range.start, markupItem.range.endInclusive, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
         }
@@ -40,6 +45,6 @@ internal class StyleConverter(val context: Context) {
             R.styleable.Paris_Spannable_android_textSize to { index -> AbsoluteSizeSpan(attributes.getDimensionPixelSize(index)) },
             R.styleable.Paris_Spannable_android_textColor to { index -> ForegroundColorSpan(attributes.getColorStateList(index)!!.defaultColor) }
         ).filter { (index, _) -> attributes.hasValue(index) }
-        .map { (index, converter) -> converter(index) }
+            .map { (index, converter) -> converter(index) }
     }
 }

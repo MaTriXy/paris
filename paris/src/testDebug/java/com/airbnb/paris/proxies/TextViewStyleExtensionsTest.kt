@@ -6,7 +6,9 @@ import android.widget.TextView
 import android.widget.TextViewStyleApplier
 import com.airbnb.paris.R
 import com.airbnb.paris.extensions.addDefault
+import com.airbnb.paris.extensions.lineHeight
 import com.airbnb.paris.extensions.style
+import com.airbnb.paris.extensions.textViewStyle
 import com.airbnb.paris.extensions.viewStyle
 import com.airbnb.paris.extensions.visibility
 import com.airbnb.paris.styles.ProgrammaticStyle
@@ -77,10 +79,23 @@ class TextViewStyleExtensionsTest {
             visibility(View.VISIBLE)
         }
         assertEquals(
-                ProgrammaticStyle.builder()
-                        .put(android.R.attr.visibility, View.VISIBLE)
-                        .build(),
-                style
+            ProgrammaticStyle.builder()
+                .put(android.R.attr.visibility, View.VISIBLE)
+                .build(),
+            style
+        )
+    }
+
+    @Test
+    fun lineHeight() {
+        val style = textViewStyle {
+            lineHeight(12)
+        }
+        assertEquals(
+            ProgrammaticStyle.builder()
+                .put(android.R.attr.lineHeight, 12)
+                .build(),
+            style
         )
     }
 }

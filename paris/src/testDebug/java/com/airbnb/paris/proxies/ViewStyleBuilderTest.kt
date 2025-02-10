@@ -1,9 +1,9 @@
 package com.airbnb.paris.proxies
 
 import android.content.Context
-import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.ViewStyleApplier
+import androidx.core.content.ContextCompat
 import com.airbnb.paris.R
 import com.airbnb.paris.attribute_values.ResourceId
 import com.airbnb.paris.styles.ProgrammaticStyle
@@ -54,13 +54,13 @@ class ViewStyleBuilderTest {
     fun backgroundTintRes() {
         val style = builder.backgroundTintRes(android.R.color.black).build()
         assertEquals(
-                ProgrammaticStyle.builder()
-                        .put(
-                                android.R.attr.backgroundTint,
-                                ResourceId(android.R.color.black)
-                        )
-                        .build(),
-                style
+            ProgrammaticStyle.builder()
+                .put(
+                    android.R.attr.backgroundTint,
+                    ResourceId(android.R.color.black)
+                )
+                .build(),
+            style
         )
     }
 
@@ -68,13 +68,13 @@ class ViewStyleBuilderTest {
     fun backgroundTintColorStateList() {
         val style = builder.backgroundTint(ContextCompat.getColorStateList(context, android.R.color.black)).build()
         assertEquals(
-                ProgrammaticStyle.builder()
-                        .put(
-                                android.R.attr.backgroundTint,
-                                ContextCompat.getColorStateList(context, android.R.color.black)
-                        )
-                        .build(),
-                style
+            ProgrammaticStyle.builder()
+                .put(
+                    android.R.attr.backgroundTint,
+                    ContextCompat.getColorStateList(context, android.R.color.black)
+                )
+                .build(),
+            style
         )
     }
 
@@ -82,13 +82,13 @@ class ViewStyleBuilderTest {
     fun backgroundTintMode() {
         val style = builder.backgroundTintMode(ViewProxy.PORTERDUFF_MODE_MULTIPLY).build()
         assertEquals(
-                ProgrammaticStyle.builder()
-                        .put(
-                                android.R.attr.backgroundTintMode,
-                                ViewProxy.PORTERDUFF_MODE_MULTIPLY
-                        )
-                        .build(),
-                style
+            ProgrammaticStyle.builder()
+                .put(
+                    android.R.attr.backgroundTintMode,
+                    ViewProxy.PORTERDUFF_MODE_MULTIPLY
+                )
+                .build(),
+            style
         )
     }
 
@@ -159,6 +159,19 @@ class ViewStyleBuilderTest {
         assertEquals(
             ProgrammaticStyle.builder()
                 .put(android.R.attr.visibility, ResourceId(R.integer.test_view_style_builder_gone))
+                .build(),
+            style
+        )
+    }
+
+    @Test
+    fun layoutWeight() {
+        val weight = 2f
+        val style = builder.layoutWeight(weight).build()
+
+        assertEquals(
+            ProgrammaticStyle.builder()
+                .put(android.R.attr.layout_weight, weight)
                 .build(),
             style
         )

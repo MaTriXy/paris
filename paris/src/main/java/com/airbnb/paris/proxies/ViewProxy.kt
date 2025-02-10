@@ -5,23 +5,31 @@ import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.support.annotation.AnyRes
-import android.support.annotation.Px
-import android.support.annotation.RequiresApi
-import android.support.v4.view.ViewCompat
 import android.util.SparseIntArray
 import android.view.View
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.annotation.AnyRes
+import androidx.annotation.FloatRange
+import androidx.annotation.Px
+import androidx.annotation.RequiresApi
+import androidx.core.view.ViewCompat
 import com.airbnb.paris.R2
 import com.airbnb.paris.annotations.AfterStyle
 import com.airbnb.paris.annotations.Attr
 import com.airbnb.paris.annotations.LayoutDimension
 import com.airbnb.paris.annotations.Styleable
 import com.airbnb.paris.styles.Style
-import com.airbnb.paris.utils.*
+import com.airbnb.paris.utils.setPaddingBottom
+import com.airbnb.paris.utils.setPaddingEnd
+import com.airbnb.paris.utils.setPaddingHorizontal
+import com.airbnb.paris.utils.setPaddingLeft
+import com.airbnb.paris.utils.setPaddingRight
+import com.airbnb.paris.utils.setPaddingStart
+import com.airbnb.paris.utils.setPaddingTop
+import com.airbnb.paris.utils.setPaddingVertical
 
 /**
  * The order of the methods in a styleable class dictates the order in which attributes are applied. This class relies on this fact to enforce the
@@ -41,10 +49,22 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
     private var marginRight: Int? = null
     private var marginStart: Int? = null
     private var marginTop: Int? = null
+    private var marginHorizontal: Int? = null
+    private var marginVertical: Int? = null
 
     @AfterStyle
     fun afterStyle(@Suppress("UNUSED_PARAMETER") style: Style?) {
-        val isMarginSet = listOf(margin, marginBottom, marginEnd, marginLeft, marginRight, marginStart, marginTop).any { it != null }
+        val isMarginSet = listOf(
+            margin,
+            marginBottom,
+            marginEnd,
+            marginLeft,
+            marginRight,
+            marginStart,
+            marginTop,
+            marginHorizontal,
+            marginVertical
+        ).any { it != null }
 
         if (!ignoreLayoutWidthAndHeight) {
             if ((width != null) xor (height != null)) {
@@ -82,10 +102,21 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
             if (margin != null) {
                 marginParams.setMargins(margin, margin, margin, margin)
             } else {
-                marginBottom?.let { marginParams.bottomMargin = it }
-                marginLeft?.let { marginParams.leftMargin = it }
-                marginRight?.let { marginParams.rightMargin = it }
-                marginTop?.let { marginParams.topMargin = it }
+                (marginHorizontal ?: marginLeft)?.let {
+                    marginParams.leftMargin = it
+                }
+
+                (marginHorizontal ?: marginRight)?.let {
+                    marginParams.rightMargin = it
+                }
+
+                (marginVertical ?: marginBottom)?.let {
+                    marginParams.bottomMargin = it
+                }
+
+                (marginVertical ?: marginTop)?.let {
+                    marginParams.topMargin = it
+                }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                     // Note: setting negatives marginEnd or marginStart doesn't work (the view resets them to 0)
@@ -106,6 +137,8 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
         marginRight = null
         marginStart = null
         marginTop = null
+        marginHorizontal = null
+        marginVertical = null
     }
 
     @Attr(R2.styleable.Paris_View_android_layout_width)
@@ -131,6 +164,33 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
         }
     }
 
+    /**
+     * Set layout weight on [LinearLayout].
+     *
+     * @param weight The weight. Must be a float >= 0.0
+     */
+    @Attr(R2.styleable.Paris_View_android_layout_weight)
+    fun setLayoutWeight(@FloatRange(from = 0.0) weight: Float) {
+        view.layoutParams?.let { params ->
+            if (params is LinearLayout.LayoutParams) {
+                params.weight = weight
+                view.layoutParams = params
+            }
+        }
+    }
+
+    @Attr(R2.styleable.Paris_View_android_layout_marginHorizontal)
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun setLayoutMarginHorizontal(@Px marginHorizontal: Int) {
+        this.marginHorizontal = marginHorizontal
+    }
+
+    @Attr(R2.styleable.Paris_View_android_layout_marginVertical)
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun setLayoutMarginVertical(@Px marginVertical: Int) {
+        this.marginVertical = marginVertical
+    }
+
     @Attr(R2.styleable.Paris_View_android_layout_marginBottom)
     fun setLayoutMarginBottom(@Px marginBottom: Int) {
         this.marginBottom = marginBottom
@@ -152,13 +212,13 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
     }
 
     @Attr(R2.styleable.Paris_View_android_layout_marginEnd)
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun setLayoutMarginEnd(@Px marginEnd: Int) {
         this.marginEnd = marginEnd
     }
 
     @Attr(R2.styleable.Paris_View_android_layout_marginStart)
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun setLayoutMarginStart(@Px marginStart: Int) {
         this.marginStart = marginStart
     }
@@ -188,6 +248,11 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
         ViewCompat.setBackgroundTintMode(view, parseTintMode(tintMode))
     }
 
+    @Attr(R2.styleable.Paris_View_android_clickable)
+    fun setClickable(clickable: Boolean) {
+        view.isClickable = clickable
+    }
+
     private fun parseTintMode(value: Int): PorterDuff.Mode? {
         return when (value) {
             PORTERDUFF_MODE_SRC_OVER -> PorterDuff.Mode.SRC_OVER
@@ -206,16 +271,27 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
         view.contentDescription = contentDescription
     }
 
+    /**
+     * android:elevation attribute and View.setElevation() method are supported since Lollipop. ViewCompat version of setElevation() method is
+     * available, but currently doesn't have any effect on pre-Lollipop devices. Also, requesting android:elevation attribute value gives some
+     * unpredicted values on some Kitkat-based Samsung devices (see https://github.com/airbnb/paris/issues/73). That's why we're parsing
+     * android:elevation attribute only when running Lollipop and use View.setElevation() for now.
+     */
     @Attr(R2.styleable.Paris_View_android_elevation)
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun setElevation(@Px elevation: Int) {
-        ViewCompat.setElevation(view, elevation.toFloat())
+        view.elevation = elevation.toFloat()
+    }
+
+    @Attr(R2.styleable.Paris_View_android_focusable)
+    fun setFocusable(focusable: Boolean) {
+        view.isFocusable = focusable
     }
 
     @Attr(R2.styleable.Paris_View_android_foreground)
+    @RequiresApi(Build.VERSION_CODES.M)
     fun setForeground(drawable: Drawable?) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            view.foreground = drawable
-        }
+        view.foreground = drawable
     }
 
     @Attr(R2.styleable.Paris_View_android_minHeight)
@@ -264,27 +340,26 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
     }
 
     @Attr(R2.styleable.Paris_View_android_paddingEnd)
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun setPaddingEnd(@Px padding: Int) {
         view.setPaddingEnd(padding)
     }
 
     @Attr(R2.styleable.Paris_View_android_paddingStart)
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @RequiresApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     fun setPaddingStart(@Px padding: Int) {
         view.setPaddingStart(padding)
     }
 
     @Attr(R2.styleable.Paris_View_android_stateListAnimator)
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun setStateListAnimator(@AnyRes animatorRes: Int) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val animator = if (animatorRes != 0) {
-                AnimatorInflater.loadStateListAnimator(view.context, animatorRes)
-            } else {
-                null
-            }
-            view.stateListAnimator = animator
+        val animator = if (animatorRes != 0) {
+            AnimatorInflater.loadStateListAnimator(view.context, animatorRes)
+        } else {
+            null
         }
+        view.stateListAnimator = animator
     }
 
     @Attr(R2.styleable.Paris_View_android_visibility)
@@ -295,6 +370,11 @@ class ViewProxy(view: View) : BaseProxy<ViewProxy, View>(view) {
     @Attr(R2.styleable.Paris_View_ignoreLayoutWidthAndHeight)
     fun setIgnoreLayoutWidthAndHeight(ignore: Boolean) {
         ignoreLayoutWidthAndHeight = ignore
+    }
+
+    @Attr(R2.styleable.Paris_View_android_importantForAccessibility)
+    fun setImportantForAccessibility(mode: Int) {
+      view.importantForAccessibility = mode
     }
 
     companion object {

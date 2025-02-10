@@ -5,17 +5,24 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
-import android.support.v4.content.res.ResourcesCompat
 import android.text.InputType
 import android.text.method.PasswordTransformationMethod
 import android.view.View
 import android.widget.TextView
 import android.widget.TextViewStyleApplier
 import com.airbnb.paris.R
+import com.airbnb.paris.extensions.fontFamily
+import com.airbnb.paris.extensions.textAllCaps
+import com.airbnb.paris.extensions.textAppearanceRes
+import com.airbnb.paris.extensions.textColor
+import com.airbnb.paris.extensions.textViewStyle
 import com.airbnb.paris.utils.ShadowResourcesCompat
 import com.airbnb.paris.utils.assertTypefaceEquals
 import com.airbnb.paris.utils.getFont
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -70,6 +77,16 @@ class TextViewStyleApplierTest {
     fun fontFamily_fontReference() {
         applier.apply(R.style.Test_TextViewStyleApplier_FontFamily_Resource)
         assertTypefaceEquals(context.getFont(R.font.roboto_regular), view.typeface)
+    }
+
+    @Test
+    fun fontFamily_precedence() {
+        val typeface = Typeface.create("sans-serif-light", Typeface.ITALIC)
+        applier.apply(textViewStyle {
+            fontFamily(typeface)
+            textAppearanceRes(android.R.style.TextAppearance_Material)
+        })
+        assertEquals(typeface, view.typeface)
     }
 
     @Test
@@ -184,6 +201,17 @@ class TextViewStyleApplierTest {
     }
 
     @Test
+    fun textAllCaps_precedence() {
+        // Assumes that the transformation method is null when all caps is false.
+        assertNull(view.transformationMethod)
+        applier.apply(textViewStyle {
+            textAppearanceRes(android.R.style.TextAppearance_Material)
+            textAllCaps(true)
+        })
+        assertNotNull(view.transformationMethod)
+    }
+
+    @Test
     fun textColor_null() {
         applier.apply(builder.textColor(null).build())
         assertEquals(ColorStateList.valueOf(0xFF000000.toInt()), view.textColors)
@@ -193,6 +221,15 @@ class TextViewStyleApplierTest {
     fun textColor_nullRes() {
         applier.apply(builder.textColorRes(R.color.null_).build())
         assertEquals(ColorStateList.valueOf(0xFF000000.toInt()), view.textColors)
+    }
+
+    @Test
+    fun textColor_precedence() {
+        applier.apply(textViewStyle {
+            textAppearanceRes(android.R.style.TextAppearance_Material)
+            textColor(Color.CYAN)
+        })
+        assertEquals(Color.CYAN, view.currentTextColor)
     }
 
     @Test
@@ -228,4 +265,22 @@ class TextViewStyleApplierTest {
         assertEquals(View.INVISIBLE, view.visibility)
     }
 
+    @Test
+    fun drawablePadding() {
+        view.compoundDrawablePadding = 0
+        applier.apply(builder.drawablePadding(100).build())
+        assertEquals(100, view.compoundDrawablePadding)
+    }
+
+    @Test
+    fun drawablePaddingXml() {
+        applier.apply(R.style.Test_TextViewStyleApplier_DrawablePadding)
+        assertEquals(10, view.compoundDrawablePadding)
+    }
+
+    @Test
+    fun lineHeight() {
+        applier.apply(builder.lineHeight(12).build())
+        assertEquals(12, view.lineHeight)
+    }
 }

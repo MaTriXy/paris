@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.text.InputType
 import android.widget.TextView
+import com.airbnb.paris.R
 import com.airbnb.paris.utils.assertTypefaceEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -142,6 +143,14 @@ class TextViewProxyTest {
     }
 
     @Test
+    fun setTextAppearance_textSize() {
+        view.textSize = 24.toFloat()
+
+        proxy.setTextAppearance(R.style.Base_TextAppearance_AppCompat_Medium)
+        assertEquals(view.textSize, view.resources.getDimension(R.dimen.abc_text_size_medium_material))
+    }
+
+    @Test
     fun setTextColor_null() {
         proxy.setTextColor(null)
         assertEquals(ColorStateList.valueOf(0xFF000000.toInt()), view.textColors)
@@ -214,5 +223,20 @@ class TextViewProxyTest {
         // IMPLEMENTATION DETAIL: the style isn't needed
         proxy.afterStyle(null)
         assertTypefaceEquals(Typeface.create("sans-serif", Typeface.BOLD), view.typeface)
+    }
+
+    @Test
+    fun setDrawablePadding() {
+        view.compoundDrawablePadding = 0
+        proxy.setDrawablePadding(100)
+        assertEquals(100, view.compoundDrawablePadding)
+    }
+
+    @Test
+    fun setLineHeight() {
+        val lineHeight = 18
+        proxy.setLineHeight(lineHeight)
+
+        assertEquals(lineHeight, view.lineHeight)
     }
 }

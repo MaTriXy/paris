@@ -1,6 +1,6 @@
 package com.airbnb.paris.attribute_values
 
-import android.support.annotation.*
+import androidx.annotation.ColorInt
 
 internal data class ColorValue(@ColorInt val colorValue: Int)
 

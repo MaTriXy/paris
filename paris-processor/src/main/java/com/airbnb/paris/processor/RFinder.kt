@@ -1,32 +1,34 @@
 package com.airbnb.paris.processor
 
+import androidx.room.compiler.processing.XAnnotationBox
+import androidx.room.compiler.processing.XTypeElement
+import androidx.room.compiler.processing.isVoid
+import androidx.room.compiler.processing.isVoidObject
 import com.airbnb.paris.annotations.ParisConfig
 import com.airbnb.paris.processor.models.AttrInfo
 import com.airbnb.paris.processor.models.StyleableChildInfo
 import com.airbnb.paris.processor.models.StyleableInfo
-import javax.lang.model.element.TypeElement
-import javax.lang.model.type.MirroredTypeException
-import javax.lang.model.type.TypeMirror
 
-internal class RFinder(override val processor: ParisProcessor) : WithParisProcessor {
+internal class RFinder(val processor: ParisProcessor) {
 
-    var element: TypeElement? = null
+    var element: XTypeElement? = null
+        private set
 
-    fun processConfig(config: ParisConfig) {
+    fun processConfig(config: XAnnotationBox<ParisConfig>) {
         if (element != null) {
             return
         }
 
-        getRTypeFromConfig(config)?.let {
-            element = it.asTypeElement()
-        }
+        element = getRTypeFromConfig(config)
     }
 
     fun processResourceAnnotations(
         styleableChildrenInfo: List<StyleableChildInfo>,
         attrsInfo: List<AttrInfo>
     ) {
-        if (element != null) {
+        // If using namespacedResources, an attribute might reference another module's R2 file, so we
+        // skip this method of determining the R file.
+        if (element != null || processor.namespacedResourcesEnabled) {
             return
         }
 
@@ -36,50 +38,45 @@ internal class RFinder(override val processor: ParisProcessor) : WithParisProces
             else -> null
         }
         arbitraryResId?.let {
-            element = elements.getTypeElement(it.className.enclosingClassName().reflectionName())
+            element = processor.environment.findTypeElement(it.className.enclosingClassName().reflectionName())
         }
     }
 
     fun processStyleables(styleablesInfo: List<StyleableInfo>) {
-        if (element == null && styleablesInfo.isNotEmpty()) {
-            styleablesInfo[0].let { styleableInfo ->
-                var packageName = styleableInfo.elementPackageName
-                while (packageName.isNotBlank()) {
-                    elements.getTypeElement("$packageName.R")?.let {
-                        element = it
-                        return
-                    }
-                    val lastIndexOfDot = packageName.lastIndexOf('.')
-                    packageName = if (lastIndexOfDot > 0) {
-                        packageName.substring(0, lastIndexOfDot)
-                    } else {
-                        ""
-                    }
+        if (element != null || styleablesInfo.isEmpty()) return
+
+        styleablesInfo[0].let { styleableInfo ->
+            var packageName = styleableInfo.elementPackageName
+            while (packageName.isNotBlank()) {
+                processor.environment.findTypeElement("$packageName.R")?.let {
+                    element = it
+                    return
+                }
+                val lastIndexOfDot = packageName.lastIndexOf('.')
+                packageName = if (lastIndexOfDot > 0) {
+                    packageName.substring(0, lastIndexOfDot)
+                } else {
+                    ""
                 }
             }
         }
     }
 
-    private fun getRTypeFromConfig(config: ParisConfig): TypeMirror? {
-        var rType: TypeMirror? = null
-        try {
-            config.rClass
-        } catch (mte: MirroredTypeException) {
-            rType = mte.typeMirror
-        }
+    private fun getRTypeFromConfig(config: XAnnotationBox<ParisConfig>): XTypeElement? {
+        val rType = config.getAsType("rClass")
 
         // Void is the default so check against that
-        val voidType = elements.getTypeElement(Void::class.java.canonicalName).asType()
-        return if (types.isSameType(voidType, rType)) {
+        return if (rType == null || rType.isVoidObject() || rType.isVoid()) {
             null
         } else {
-            if (rType != null && rType.asTypeElement().simpleName.toString() != "R") {
-                logError {
+            val rTypeElement = rType.typeElement ?: return null
+            if (rTypeElement.name != "R") {
+                processor.logError(rTypeElement) {
                     "@ParisConfig's rClass parameter is pointing to a non-R class"
                 }
                 null
             } else {
-                rType
+                rTypeElement
             }
         }
     }

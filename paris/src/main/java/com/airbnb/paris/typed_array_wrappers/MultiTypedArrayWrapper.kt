@@ -11,6 +11,9 @@ import com.airbnb.paris.styles.Style
  * @param styleableAttrs The styleable attribute list from which the [wrappers] were created
  */
 internal class MultiTypedArrayWrapper constructor(
+    /**
+     * The later wrappers have precedence.
+     */
     private val wrappers: List<TypedArrayWrapper>,
     private val styleableAttrs: IntArray
 ) : TypedArrayWrapper() {
@@ -99,6 +102,7 @@ internal class MultiTypedArrayWrapper constructor(
     }
 
     override fun recycle() {
-        wrappers.forEach { it.recycle() }
+        // working around lint issue incorrectly flagging forEach as being a java language feature only for api 24+
+        wrappers.forEachIndexed { _, typedArrayWrapper ->  typedArrayWrapper.recycle() }
     }
 }

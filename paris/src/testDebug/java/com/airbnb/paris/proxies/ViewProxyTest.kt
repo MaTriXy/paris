@@ -4,8 +4,9 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.ColorDrawable
-import android.support.v4.content.ContextCompat
 import android.view.View
+import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -41,8 +42,8 @@ class ViewProxyTest {
         view.backgroundTintList = ContextCompat.getColorStateList(context, android.R.color.black)
         proxy.setBackgroundTint(ContextCompat.getColorStateList(context, android.R.color.holo_red_dark))
         assertEquals(
-                ContextCompat.getColorStateList(context, android.R.color.holo_red_dark),
-                view.backgroundTintList
+            ContextCompat.getColorStateList(context, android.R.color.holo_red_dark),
+            view.backgroundTintList
         )
     }
 
@@ -52,9 +53,16 @@ class ViewProxyTest {
         view.backgroundTintMode = PorterDuff.Mode.SRC_OVER
         proxy.setBackgroundTintMode(ViewProxy.PORTERDUFF_MODE_ADD)
         assertEquals(
-                PorterDuff.Mode.ADD,
-                view.backgroundTintMode
+            PorterDuff.Mode.ADD,
+            view.backgroundTintMode
         )
+    }
+
+    @Test
+    fun setClickable() {
+        view.isClickable = false
+        proxy.setClickable(true)
+        assert(view.isClickable)
     }
 
     @Test
@@ -63,6 +71,13 @@ class ViewProxyTest {
         view.contentDescription = "Hello"
         proxy.setContentDescription(null)
         assertEquals(null, view.contentDescription)
+    }
+
+    @Test
+    fun setFocusable() {
+        view.isFocusable = false
+        proxy.setFocusable(true)
+        assert(view.isFocusable)
     }
 
     @Test
@@ -114,5 +129,20 @@ class ViewProxyTest {
         // When set in XML the index corresponding to gone is 2
         proxy.setVisibility(2)
         assertEquals(View.GONE, view.visibility)
+    }
+
+    @Test
+    fun setLayoutWeight() {
+        val weight = 0.78f
+        view.layoutParams = LinearLayout.LayoutParams(100, 100)
+        proxy.setLayoutWeight(weight)
+        assertEquals(weight, (view.layoutParams as LinearLayout.LayoutParams).weight)
+    }
+
+    @Test
+    fun setImportantForAccessibility() {
+      val mode = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+      proxy.setImportantForAccessibility(mode)
+      assertEquals(mode, view.importantForAccessibility)
     }
 }

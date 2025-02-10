@@ -1,10 +1,10 @@
 package com.airbnb.paris.utils
 
 import android.content.res.Resources
-import android.support.annotation.AnyRes
-import android.support.annotation.DimenRes
-import android.support.annotation.StyleRes
 import android.util.TypedValue
+import androidx.annotation.AnyRes
+import androidx.annotation.DimenRes
+import androidx.annotation.StyleRes
 import com.airbnb.paris.styles.ResourceStyle
 
 fun Resources.dpToPx(dps: Int) =
@@ -20,7 +20,8 @@ fun Resources.getLayoutDimension(@DimenRes res: Int): Int {
     val outValue = TypedValue()
     getValue(res, outValue, true)
     if (outValue.type >= TypedValue.TYPE_FIRST_INT
-            && outValue.type <= TypedValue.TYPE_LAST_INT) {
+        && outValue.type <= TypedValue.TYPE_LAST_INT
+    ) {
         return outValue.data
     } else {
         return outValue.getDimension(displayMetrics).toInt()

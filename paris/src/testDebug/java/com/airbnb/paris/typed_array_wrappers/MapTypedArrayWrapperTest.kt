@@ -3,13 +3,14 @@ package com.airbnb.paris.typed_array_wrappers
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
-import android.support.v4.content.res.ResourcesCompat
 import com.airbnb.paris.R
 import com.airbnb.paris.attribute_values.ResourceId
 import com.airbnb.paris.utils.ShadowResourcesCompat
 import com.airbnb.paris.utils.assertTypefaceEquals
 import com.airbnb.paris.utils.getFont
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

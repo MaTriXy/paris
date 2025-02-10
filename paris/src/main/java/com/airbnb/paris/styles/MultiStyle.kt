@@ -1,12 +1,14 @@
 package com.airbnb.paris.styles
 
-import android.annotation.*
-import android.content.*
-import com.airbnb.paris.typed_array_wrappers.*
+import android.annotation.SuppressLint
+import android.content.Context
+import com.airbnb.paris.typed_array_wrappers.MultiTypedArrayWrapper
+import com.airbnb.paris.typed_array_wrappers.TypedArrayTypedArrayWrapper
+import com.airbnb.paris.typed_array_wrappers.TypedArrayWrapper
 
 data class MultiStyle internal constructor(
-        private val name: String,
-        private val styles: List<Style>
+    private val name: String,
+    private val styles: List<Style>
 ) : Style {
 
     constructor(name: String, vararg styles: Style) : this(name, styles.toList())
@@ -24,8 +26,10 @@ data class MultiStyle internal constructor(
 
     @SuppressLint("Recycle")
     override fun obtainStyledAttributes(context: Context, attrs: IntArray): TypedArrayWrapper {
-        val wrappers = styles.map { it.obtainStyledAttributes(context, attrs) }
-        return MultiTypedArrayWrapper(wrappers, attrs)
+        val themeTypedArrayWrapper = TypedArrayTypedArrayWrapper(context, context.obtainStyledAttributes(attrs))
+        val styleWrappers = styles.map { it.obtainStyledAttributes(context, attrs) }
+        // Returns theme attributes by default.
+        return MultiTypedArrayWrapper(listOf(themeTypedArrayWrapper) + styleWrappers, attrs)
     }
 
     companion object {

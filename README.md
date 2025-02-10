@@ -13,10 +13,11 @@ Paris lets you define and apply styles programmatically to Android views, includ
 In your project's `build.gradle`:
 ```gradle
 dependencies {
-    implementation 'com.airbnb.android:paris:1.0.0'
-    // If you are using Paris annotations
-    implementation 'com.airbnb.android:paris-annotations:1.0.0'
-    annotationProcessor 'com.airbnb.android:paris-processor:1.0.0'
+    implementation 'com.airbnb.android:paris:2.0.0'
+    // Apply the Paris processor if you're using Paris annotations for code gen.
+    kapt 'com.airbnb.android:paris-processor:2.0.0'
+    // or if you are using Kotlin Symbol Processing
+    ksp 'com.airbnb.android:paris-processor:2.0.0'
 }
 ```
 
@@ -26,40 +27,80 @@ To use Paris in a library module see [Library Modules](../../wiki/Library-Module
 
 ### Applying an XML-Defined Style
 
+```kotlin
+myView.style(R.style.MyStyle)
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 Paris.style(myView).apply(R.style.MyStyle);
 ```
+</details><br/>
 
-Where `myView` is an arbitrary view instance and `MyStyle` an XML-defined style. Many but not all attributes are supported, for more see [Supported View Types and Attributes](../../wiki/Supported-View-Types-and-Attributes).
+Where `myView` is an arbitrary view instance, `MyStyle` an XML-defined style, and `style` an extension function provided by Paris. Many but not all attributes are supported, for more see [Supported View Types and Attributes](../../wiki/Supported-View-Types-and-Attributes).
 
 ### Combining 2 or More Styles
+
+```kotlin
+myView.style {
+    add(R.style.StyleA)
+    add(R.style.StyleB)
+    …
+}
+```
+<details><summary>Click to see the example in Java.</summary>
 
 ```java
 Paris.styleBuilder(myView)
         .add(R.style.StyleA)
         .add(R.style.StyleB)
-        ...
+        …
         .apply();
 ```
+</details><br/>
 
 In cases where there's some overlap the attribute value from the last style added prevails. For more see [Combining Styles](../../wiki/Building-and-Applying-Styles#combining-styles).
 
 ### Defining Styles Programmatically
 
+```kotlin
+textView.style {
+    // Using an actual value.
+    textColor(Color.GREEN)
+    // Or a resource.
+    textSizeRes(R.dimen.my_text_size_small)
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 Paris.styleBuilder(textView)
-        .textColor(Color.GREEN) // Using an actual value
-        .textSizeRes(R.dimen.my_text_size_small) // Or a resource
+        // Using an actual value.
+        .textColor(Color.GREEN)
+        // Or a resource.
+        .textSizeRes(R.dimen.my_text_size_small)
         .apply();
 ```
+</details><br/>
 
 Can be combined with style resources as well:
+```kotlin
+textView.style {
+    // Adds all the attributes defined in the MyGreenTextView style.
+    add(R.style.MyGreenTextView)
+    textSizeRes(R.dimen.my_text_size_small)
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 Paris.styleBuilder(textView)
+        // Adds all the attributes defined in the MyGreenTextView style.
         .add(R.style.MyGreenTextView)
         .textSizeRes(R.dimen.my_text_size_small)
         .apply();
 ```
+</details><br/>
 
 For more see [Defining Styles Programmatically](../../wiki/Building-and-Applying-Styles#defining-styles-programmatically).
 
@@ -75,8 +116,40 @@ Attributes are declared as followed:
 ```
 
 The custom view is annotated with `@Styleable` and `@Attr`:
+```kotlin
+// The value here corresponds to the name chosen in declare-styleable.
+@Styleable("MyView")
+class MyView(…) : ViewGroup(…) {
+
+    init {
+        // This call enables the custom attributes when used in XML layouts. It
+        // extracts styling information from AttributeSet like it would a StyleRes.
+        style(attrs)
+    }
+
+    @Attr(R.styleable.MyView_title)
+    fun setTitle(title: String) {
+        // Automatically called with the title value (if any) when an AttributeSet
+        // or StyleRes is applied to the MyView instance.
+    }
+
+    @Attr(R.styleable.MyView_image)
+    fun setImage(image: Drawable?) {
+        // Automatically called with the image value (if any) when an AttributeSet
+        // or StyleRes is applied to the MyView instance.
+    }
+
+    @Attr(R.styleable.MyView_imageSize)
+    fun setImageSize(@Px imageSize: Int) {
+        // Automatically called with the imageSize value (if any) when an
+        // AttributeSet or StyleRes is applied to the MyView instance.
+    }
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
-// The value here corresponds to the name chosen in declare-styleable
+// The value here corresponds to the name chosen in declare-styleable.
 @Styleable("MyView")
 public class MyView extends ViewGroup {
 
@@ -89,27 +162,32 @@ public class MyView extends ViewGroup {
     }
 
     public MyView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        // Enables the custom attributes when used in XML layouts
+        this(context, attrs, defStyle);
+        // This call enables the custom attributes when used in XML layouts. It
+        // extracts styling information from AttributeSet like it would a StyleRes.
         Paris.style(this).apply(attrs);
     }
 
     @Attr(R.styleable.MyView_title)
     public void setTitle(String title) {
-        ...
+        // Automatically called with the title value (if any) when an AttributeSet
+        // or StyleRes is applied to the MyView instance.
     }
 
     @Attr(R.styleable.MyView_image)
     public void setImage(Drawable image) {
-        ...
+        // Automatically called with the image value (if any) when an AttributeSet
+        // or StyleRes is applied to the MyView instance.
     }
 
     @Attr(R.styleable.MyView_imageSize)
     public void setImageSize(@Px int imageSize) {
-        ...
+        // Automatically called with the imageSize value (if any) when an
+        // AttributeSet or StyleRes is applied to the MyView instance.
     }
 }
 ```
+</details><br/>
 
 The `@Attr`-annotated methods will be called by Paris when the view is inflated with an `AttributeSet` or when a style is applied.
 
@@ -127,6 +205,23 @@ Attributes are declared as followed for the 2 subviews we'd like to be able to s
 ```
 
 The subview fields are annotated with `@StyleableChild`:
+```kotlin
+@Styleable("MyHeader")
+class MyHeader(…) : ViewGroup(…) {
+
+    @StyleableChild(R.styleable.MyHeader_titleStyle)
+    internal val title: TextView …
+    
+    @StyleableChild(R.styleable.MyHeader_subtitleStyle)
+    internal val subtitle: TextView …
+    
+    init {
+        style(attrs)
+    }
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 @Styleable("MyHeader")
 public class MyHeader extends ViewGroup {
@@ -137,10 +232,11 @@ public class MyHeader extends ViewGroup {
     @StyleableChild(R.styleable.MyHeader_subtitleStyle)
     TextView subtitle;
     
-    ...
-    // Make sure to call Paris.style(this).apply(attrs) during initialization
+    …
+    // Make sure to call Paris.style(this).apply(attrs) during initialization.
 }
 ```
+</details><br/>
 
 The title and subtitle styles can now be part of `MyHeader` styles:
 ```xml
@@ -150,48 +246,99 @@ The title and subtitle styles can now be part of `MyHeader` styles:
     app:subtitleStyle="@style/Regular" />
 ```
 
+```kotlin
+myHeader.style {
+    // Defined in XML.
+    titleStyle(R.style.Title2)
+    // Defined programmatically.
+    subtitleStyle {
+        textColorRes(R.color.text_color_regular)
+        textSizeRes(R.dimen.text_size_regular)
+    }
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 Paris.styleBuilder(myHeader)
-        .titleStyle(R.style.Title2) // Defined in XML
-        .subtitleStyle((builder) -> builder // Defined programmatically
+        // Defined in XML.
+        .titleStyle(R.style.Title2)
+        // Defined programmatically.
+        .subtitleStyle((builder) -> builder
                 .textColorRes(R.color.text_color_regular)
                 .textSizeRes(R.dimen.text_size_regular))
         .apply();
 ```
+</details><br/>
+
+**Attention:** Extension functions like `titleStyle` and `subtitleStyle` are generated during compilation by the Paris annotation processor. When new `@StyleableChild` annotations are added, the project must be (re)compiled once for the related functions to become available.
 
 For more see [Styling Subviews](../../wiki/Custom-Views#styling-subviews).
 
 ### Linking Styles to Views
 
+```kotlin
+@Styleable
+class MyView(…) : View(…) {
+
+    companion object {
+        // For styles defined in XML.
+        @Style
+        val RED_STYLE = R.style.MyView_Red
+
+        // For styles defined programmatically.
+        @Style
+        val GREEN_STYLE = myViewStyle {
+            background(R.color.green)
+        }
+    }
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
 @Styleable
 public class MyView extends View {
 
-    // For styles defined in XML
+    // For styles defined in XML.
     @Style
     static final int RED_STYLE = R.style.MyView_Red;
 
-    // For styles defined programmatically
+    // For styles defined programmatically.
     @Style
     static void greenStyle(MyViewStyleApplier.StyleBuilder builder) {
         builder.background(R.color.green);
     }
-
-    ...
 }
 ```
+</details><br/>
 
 Helper methods are generated for each linked style:
+```kotlin
+myView.style { addRed() } // Equivalent to style(R.style.MyView_Red)
+myView.style { addGreen() } // Equivalent to add(MyView.GREEN_STYLE)
+
+myView.style {
+    addRed() // Equivalent to add(R.style.MyView_Red)
+    addGreen() // Equivalent to add(MyView.GREEN_STYLE)
+    …
+}
+```
+<details><summary>Click to see the example in Java.</summary>
+
 ```java
-Paris.style(myView).applyRed(); // Equivalent to .apply(R.style.MyView_Red)
-Paris.style(myView).applyGreen(); // No equivalent
+Paris.style(myView).applyRed(); // Equivalent to apply(R.style.MyView_Red)
+Paris.style(myView).applyGreen(); // No equivalent.
 
 Paris.styleBuilder(myView)
-        .addRed() // Equivalent to .add(R.style.MyView_Red)
-        .addGreen() // No equivalent
-        ...
+        .addRed() // Equivalent to add(R.style.MyView_Red)
+        .addGreen() // No equivalent.
+        …
         .apply();
 ```
+</details><br/>
+
+**Attention:** Extension functions like `addRed` and `addGreen` are generated during compilation by the Paris annotation processor. When new `@Style` annotations are added, the project must be (re)compiled once for the related functions to become available.
 
 For more see [Linking Styles to Custom Views](../../wiki/Custom-Views#linking-styles-to-custom-views).
 

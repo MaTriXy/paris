@@ -2,23 +2,25 @@ package com.airbnb.paris.styles
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.support.annotation.AnyRes
-import android.support.annotation.AttrRes
-import android.support.annotation.ColorInt
+import androidx.annotation.AnyRes
+import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
 import com.airbnb.paris.attribute_values.ColorValue
 import com.airbnb.paris.attribute_values.DpValue
 import com.airbnb.paris.attribute_values.ResourceId
 import com.airbnb.paris.attribute_values.Styles
 import com.airbnb.paris.typed_array_wrappers.MapTypedArrayWrapper
+import com.airbnb.paris.typed_array_wrappers.MultiTypedArrayWrapper
+import com.airbnb.paris.typed_array_wrappers.TypedArrayTypedArrayWrapper
 import com.airbnb.paris.typed_array_wrappers.TypedArrayWrapper
-import java.util.*
+import java.util.HashMap
 
 data class ProgrammaticStyle internal constructor(
     private val attributeMap: Map<Int, Any?>,
     private var name: String? = null
 ) : Style {
 
-    private constructor(builder: Builder) : this(builder.attrResToValueResMap, builder.name)
+    internal constructor(builder: Builder) : this(builder.attrResToValueResMap, builder.name)
 
     data class Builder internal constructor(
         internal val attrResToValueResMap: MutableMap<Int, Any?> = HashMap(),
@@ -78,6 +80,17 @@ data class ProgrammaticStyle internal constructor(
     }
 
     @SuppressLint("Recycle")
-    override fun obtainStyledAttributes(context: Context, attrs: IntArray): TypedArrayWrapper =
-        MapTypedArrayWrapper(context, attrs, attributeMap)
+    override fun obtainStyledAttributes(context: Context, attrs: IntArray): TypedArrayWrapper {
+        val themeTypedArrayWrapper = TypedArrayTypedArrayWrapper(context, context.obtainStyledAttributes(attrs))
+        val styleTypedArrayWrapper = MapTypedArrayWrapper(context, attrs, attributeMap)
+        return if (themeTypedArrayWrapper.getIndexCount() > 0) {
+            // Returns theme attributes by default.
+            MultiTypedArrayWrapper(
+                wrappers = listOf(themeTypedArrayWrapper, styleTypedArrayWrapper),
+                styleableAttrs = attrs
+            )
+        } else {
+            styleTypedArrayWrapper
+        }
+    }
 }

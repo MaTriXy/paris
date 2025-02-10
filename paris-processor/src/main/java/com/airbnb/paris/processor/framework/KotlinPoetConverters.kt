@@ -4,7 +4,18 @@
 package com.airbnb.paris.processor.framework
 
 import com.squareup.javapoet.TypeName
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ANY
+import com.squareup.kotlinpoet.BOOLEAN
+import com.squareup.kotlinpoet.BYTE
+import com.squareup.kotlinpoet.CHAR
+import com.squareup.kotlinpoet.DOUBLE
+import com.squareup.kotlinpoet.FLOAT
+import com.squareup.kotlinpoet.INT
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LONG
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.SHORT
+import com.squareup.kotlinpoet.UNIT
 import javax.lang.model.element.Modifier
 
 internal typealias JavaClassName = com.squareup.javapoet.ClassName
@@ -94,16 +105,14 @@ private fun JavaClassName.getSimpleNamesInKotlin(): List<String> {
 // Does not support transferring annotations
 internal fun JavaWildcardTypeName.toKPoet() =
     if (!lowerBounds.isEmpty()) {
-        KotlinWildcardTypeName.supertypeOf(lowerBounds.first().toKPoet())
+        KotlinWildcardTypeName.consumerOf(lowerBounds.first().toKPoet())
     } else {
-        KotlinWildcardTypeName.subtypeOf(upperBounds.first().toKPoet())
+        KotlinWildcardTypeName.producerOf(upperBounds.first().toKPoet())
     }
 
 // Does not support transferring annotations
-internal fun JavaParametrizedTypeName.toKPoet() = KotlinParameterizedTypeName.get(
-    this.rawType.toKPoet(),
-    *typeArguments.toKPoet().toTypedArray()
-)
+internal fun JavaParametrizedTypeName.toKPoet() =
+    this.rawType.toKPoet().parameterizedBy(*typeArguments.toKPoet().toTypedArray())
 
 // Does not support transferring annotations
 internal fun JavaArrayTypeName.toKPoet(): KotlinTypeName {
@@ -127,10 +136,7 @@ internal fun JavaArrayTypeName.toKPoet(): KotlinTypeName {
         }
     }
 
-    return KotlinParameterizedTypeName.get(
-        KotlinClassName(kotlinPkg, "Array"),
-        this.componentType.toKPoet()
-    )
+    return KotlinClassName(kotlinPkg, "Array").parameterizedBy(this.componentType.toKPoet())
 }
 
 // Does not support transferring annotations

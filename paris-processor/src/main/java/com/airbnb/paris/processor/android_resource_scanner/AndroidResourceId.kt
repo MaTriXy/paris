@@ -6,15 +6,21 @@ import com.airbnb.paris.processor.framework.KotlinCodeBlock
 import com.airbnb.paris.processor.framework.toKPoet
 import com.squareup.javapoet.ClassName
 
-internal class AndroidResourceId(val value: Int, val className: ClassName, val resourceName: String) {
+/**
+ * @param className Like com.example.R.styleable
+ * @param resourceName Like title_view
+ */
+class AndroidResourceId(val value: Int, val className: ClassName, val resourceName: String) {
 
-    val code: JavaCodeBlock = if (className.topLevelClassName() == AndroidClassNames.R) {
+    val rClassName: ClassName = className.topLevelClassName()
+
+    val code: JavaCodeBlock = if (rClassName == AndroidClassNames.R) {
         JavaCodeBlock.of("\$L.\$N", className, resourceName)
     } else {
         JavaCodeBlock.of("\$T.\$N", className, resourceName)
     }
 
-    val kotlinCode: KotlinCodeBlock = if (className.topLevelClassName() == AndroidClassNames.R) {
+    val kotlinCode: KotlinCodeBlock = if (rClassName == AndroidClassNames.R) {
         KotlinCodeBlock.of("%L.%N", className.toKPoet(), resourceName)
     } else {
         KotlinCodeBlock.of("%T.%N", className.toKPoet(), resourceName)
